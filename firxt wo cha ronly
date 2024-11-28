@@ -1,0 +1,65 @@
+import pandas as pd
+import re
+
+def filter_employee_logins(df: pd.DataFrame) -> pd.DataFrame:
+    """
+    Filters employee logins based on specific conditions:
+    - First two characters of dev_login must be letters
+    - Status must be 'A' or 'L' (not 'T')
+    - Returns unique combinations of emp_id, emp_type, and dev_login
+    """
+    # Create a copy of input DataFrame
+    work_df = df.copy()
+    
+    # Function to check if first two chars are letters
+    def valid_dev_login(login):
+        if pd.isna(login) or len(str(login)) < 2:
+            return False
+        return str(login)[:2].isalpha()
+    
+    # Apply all filters
+    filtered_df = (
+        work_df
+        # Filter status
+        .loc[work_df['status'].isin(['A', 'L'])]
+        # Filter dev_login pattern
+        .loc[work_df['dev_login'].apply(valid_dev_login)]
+        # Drop duplicates to get unique combinations
+        .drop_duplicates(subset=['emp_id', 'emp_type', 'dev_login'])
+        # Sort for better readability
+        .sort_values(['emp_id', 'emp_type'])
+        # Select required columns
+        [['emp_id', 'emp_type', 'dev_login', 'status', 'flag']]
+    )
+    
+    return filtered_df
+
+# Test with sample data
+def test_with_dataframe():
+    # Sample test data with various cases
+    test_data = {
+        'emp_id':    ['E001', 'E001', 'E001', 'E002', 'E002', 'E003', 'E003', 'E004', 'E004'],
+        'emp_type':  ['DEV',  'DEV',  'QA',   'QA',   'QA',   'DEV',  'DEV',  'QA',   'DEV'],
+        'dev_login': ['ab123', 'ab123', 'cd_test', '12_test', 'xy_dev', 'mn890', '1test', 'pq_dev', ''],
+        'status':    ['A', 'A', 'L', 'T', 'A', 'A', 'L', 'A', 'A'],
+        'flag':      ['Y', 'N', 'Y', 'Y', 'N', 'Y', 'N', 'Y', 'N']
+    }
+    
+    input_df = pd.DataFrame(test_data)
+    
+    print("\nInput DataFrame:")
+    print(input_df)
+    print("\n" + "="*80 + "\n")
+    
+    result_df = filter_employee_logins(input_df)
+    
+    print("Filtered Results:")
+    print(result_df)
+    print("\nExplanation of filtered results:")
+    print("1. Only includes records where:")
+    print("   - First two characters of dev_login are letters")
+    print("   - Status is 'A' or 'L'")
+    print("   - Unique combinations of emp_id, emp_type, and dev_login")
+
+if __name__ == "__main__":
+    test_with_dataframe()
